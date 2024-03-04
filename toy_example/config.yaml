@@ -1,0 +1,4 @@
+samples: data/samples.txt
+outdir: snakemake_out
+signal_dir: data/raw_signal
+covariates: data/meta/meta_unique.txt
