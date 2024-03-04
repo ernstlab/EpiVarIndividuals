@@ -1,0 +1,57 @@
+import pandas as pd
+
+##### load config and sample sheets #####
+
+configfile: "config.yaml"
+
+chromosomes = range(22, 23)
+models = range(50, 55, 5)
+sampleF = config["samples"]
+outdir = config["outdir"]
+signal_dir  = config["signal_dir"]
+covF = config["covariates"]
+marks = ["H3K27AC", "H3K4ME1", "H3K4ME3"]
+
+##### target rules #####
+rule all:
+        input:
+#                expand(os.path.join(outdir, "signal_corrected", "chr{chrm}_signal_corrected_quasipoisson.txt"), chrm = chromosomes),
+                expand(os.path.join(outdir, "signal_binarized", "cell1_chr{chrm}_binary.txt"), chrm = chromosomes),
+                expand(os.path.join(outdir, "learnmodel_out", "emissions_{model}.txt"), model = models)
+
+rule preprocess_signal:
+        input:
+                signal = os.path.join(signal_dir, "cell1_chr{chrm}_signal.txt.gz"),
+                covariates = covF,
+                include = sampleF
+        params:
+                chrm="{chrm}",
+                marks=marks
+        output:
+                outSignal = os.path.join(outdir, "signal_corrected", "chr{chrm}_signal_corrected_quasipoisson.txt")
+        script:
+                "/u/home/e/eamaciej/project-ernst/stackedHMM/toy_example/scripts/BA9_reg_cov2_quasipoisson.R"
+
+rule binarize:
+        input:
+                expand(os.path.join(outdir, "signal_corrected", "chr{chrm}_signal_corrected_quasipoisson.txt"), chrm = chromosomes)
+        params:
+                signalDir=os.path.join(outdir, "signal_corrected"),
+                binaryOut=os.path.join(outdir, "signal_binarized")
+        output:
+                expand(os.path.join(outdir, "signal_binarized", "cell1_chr{chrm}_binary.txt"), chrm = chromosomes)
+        shell:
+                "java -jar -Xmx16g -Djava.awt.headless=true ChromHMM.jar BinarizeSignal {params}"
+
+rule learn:
+        input:
+                expand(os.path.join(outdir, "signal_binarized", "cell1_chr{chrm}_binary.txt"), chrm = chromosomes),
+        params:
+                binary=os.path.join(outdir, "signal_binarized"),
+                outdir=os.path.join(outdir, "learnmodel_out"),
+                model="{model}"
+        output:
+                os.path.join(outdir, "learnmodel_out", "emissions_{model}.txt"),
+                os.path.join(outdir, "learnmodel_out", "cell1_{model}_segments.bed")
+        shell:
+                "java -jar -Xmx50g -Djava.awt.headless=true ChromHMM.jar LearnModel {params.binary} {params.outdir} {params.model} hg19"
