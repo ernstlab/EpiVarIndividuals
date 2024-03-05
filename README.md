@@ -2,6 +2,8 @@
 
 The "stacked" ChromHMM model learns recurring patterns of epigenetic variation across individuals and histone marks throughout the genome. This model was trained on LCL histone mark data published <a href="http://mitra.stanford.edu/kundaje/portal/chromovar3d/">here</a>  and hosted <a href="https://public.hoffman2.idre\linebreak.ucla.edu/ernst/TMZQE/">here</a> for reproducibility. This repository contains code for preprocessing epigenetic data and a toy example demonstrating how to train a stacked ChromHMM model on a subset of the LCL data.
 
+The USCS Genome Browser custom track hub for the LCL genome segmentation and corresponding histone mark data (from the final trained model) can be found <a href="https://public.hoffman2.idre.ucla.edu/ernst/4WSCV/">here</a>.
+
 ## Usage of regress_covariates_signal.R for data preprocessing
 Covariate correction reduces the number of chromatin states corresponding to sample-level confounders. This process should be performed within each chromosome and mark.
 
